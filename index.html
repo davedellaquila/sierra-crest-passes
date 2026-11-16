@@ -127,7 +127,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
   <h1>Sierra Crest <em>Passes</em></h1>
   <p class="dek" id="dek">Every paved crossing of the Sierra crest, plotted on the spine of the range — from Fredonyer in the north to Tehachapi in the south. Thirteen are in the logbook. Sixteen remain. This is the attempt to cross them all.</p>
   <div class="stats" aria-label="Progress summary">
-    <div class="stat"><b id="statCrossed">13 of 29</b><span>Crossed</span></div>
+    <div class="stat"><b id="statCrossed">15 of 29</b><span>Crossed</span></div>
     <div class="stat"><b id="statPct">44.8%</b><span>Complete</span></div>
     <div class="stat"><b id="statHighestCrossed">9,943 ft</b><span id="statHighestCrossedLabel">Highest crossed — Tioga</span></div>
     <div class="stat"><b>9,943 ft</b><span>Highest overall — Tioga</span></div>
@@ -165,7 +165,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
       </div>
 
       <div class="notes">
-        <div class="note"><h3 id="bookNoteTitle">In the book — 13 crossed</h3><p id="bookNoteText"><strong>Tioga Pass (9,943 ft)</strong> · <strong>Sonora Pass (9,624 ft)</strong> · <strong>Sherman Pass (9,140 ft)</strong> · <strong>Mount Rose Summit (8,946 ft)</strong> · <strong>Ebbetts Pass (8,732 ft)</strong> · <strong>Carson Pass (8,573 ft)</strong> · <strong>Monitor Pass (8,321 ft)</strong> · <strong>Pacific Grade Summit (8,051 ft)</strong> · <strong>Luther Pass (7,735 ft)</strong> · <strong>Echo Summit (7,377 ft)</strong> · <strong>Daggett Pass (7,339 ft)</strong> · <strong>Donner Summit (7,239 ft)</strong> · <strong>Donner Pass (7,088 ft)</strong>. 7 of the top nine by elevation are in the book.</p></div>
+        <div class="note"><h3 id="bookNoteTitle">In the book — 15 crossed</h3><p id="bookNoteText"><strong>Tioga Pass (9,943 ft)</strong> · <strong>Sonora Pass (9,624 ft)</strong> · <strong>Sherman Pass (9,140 ft)</strong> · <strong>Mount Rose Summit (8,946 ft)</strong> · <strong>Ebbetts Pass (8,732 ft)</strong> · <strong>Carson Pass (8,573 ft)</strong> · <strong>Monitor Pass (8,321 ft)</strong> · <strong>Pacific Grade Summit (8,051 ft)</strong> · <strong>Deadman Summit (8,047 ft)</strong> · <strong>Luther Pass (7,735 ft)</strong> · <strong>Devil's Gate Pass (7,519 ft)</strong> · <strong>Echo Summit (7,377 ft)</strong> · <strong>Daggett Pass (7,339 ft)</strong> · <strong>Donner Summit (7,239 ft)</strong> · <strong>Donner Pass (7,088 ft)</strong>. 7 of the top nine by elevation are in the book.</p></div>
         <div class="note"><h3>How the crest reads</h3><p>The rust line joins the passes in latitude order, north to south, so you can trace the spine at a glance. It is a crest diagram, not a driving route — several passes sit on spurs (US-395 summits, Nevada-side crossings) just off the main divide.</p></div>
         <div class="note"><h3>Season note</h3><p>The high passes — Tioga, Sonora, Ebbetts, Monitor, Kaiser — are seasonal and close with snow. Carson (SR-88) and Donner Summit (I-80) are the all-weather workhorses. Plan the remaining high ones for late spring through fall.</p></div>
       </div>
@@ -196,7 +196,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
   </div>
 </div>
 
-<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Luther, Echo, Daggett, Donner Summit, and Donner Pass. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium).</footer>
+<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Deadman, Luther, Devil's Gate, Echo, Daggett, Donner Summit, and Donner Pass. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium).</footer>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
@@ -212,9 +212,9 @@ var PASSES=[
 {name:"Monitor Pass",elev:8321,lat:38.67556,lon:-119.61944,road:"SR-89",crossed:true},
 {name:"Conway Summit",elev:8143,lat:38.08806,lon:-119.18194,road:"US-395",crossed:false},
 {name:"Pacific Grade Summit",elev:8051,lat:38.51667,lon:-119.90944,road:"SR-4",crossed:true},
-{name:"Deadman Summit",elev:8047,lat:37.77083,lon:-119.00833,road:"US-395",crossed:false},
+{name:"Deadman Summit",elev:8047,lat:37.77083,lon:-119.00833,road:"US-395",crossed:true},
 {name:"Luther Pass",elev:7735,lat:38.78694,lon:-119.94583,road:"SR-89",crossed:true},
-{name:"Devil's Gate Pass",elev:7519,lat:38.34833,lon:-119.36194,road:"US-395",crossed:false},
+{name:"Devil's Gate Pass",elev:7519,lat:38.34833,lon:-119.36194,road:"US-395",crossed:true},
 {name:"Echo Summit",elev:7377,lat:38.81300,lon:-120.03000,road:"US-50",crossed:true},
 {name:"Daggett Pass",elev:7339,lat:38.97657,lon:-119.88879,road:"SR-207 (Nevada side)",crossed:true},
 {name:"Donner Summit",elev:7239,lat:39.34000,lon:-120.34389,road:"I-80",crossed:true},
