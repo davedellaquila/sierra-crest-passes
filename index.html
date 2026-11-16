@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Sierra Crest Passes — The Crossing Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700;6..72,900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+:root{
+  --paper:#faf6ec; --paper2:#fffdf6; --ink:#1c231c; --ink2:#4a554a; --line:#d8cfb8;
+  --green:#1a6b3c; --green-bg:#e3efe2; --rust:#b4532a; --gold:#c49a2b; --card:#ffffff;
+  --map-border:#2a332a;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#141814; --paper2:#1a1f1a; --ink:#ece8da; --ink2:#b8bcae; --line:#3a4038; --card:#1e241e; --green-bg:#1e3a28; --map-border:#3a4038; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;}
+a{color:var(--green)}
+button{min-height:44px}
+/* Masthead */
+.masthead{border-bottom:3px double var(--ink);padding:18px 20px 14px;max-width:1280px;margin:0 auto}
+.mast-top{display:flex;justify-content:space-between;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--line);padding-bottom:10px;flex-wrap:wrap}
+.masthead h1{font-family:"Newsreader",serif;font-weight:900;font-size:clamp(38px,6vw,64px);line-height:.92;letter-spacing:-.02em;margin:14px 0 6px}
+.masthead h1 em{font-style:italic;font-weight:500}
+.dek{font-family:"Newsreader",serif;font-size:clamp(17px,2.2vw,21px);line-height:1.45;color:var(--ink2);max-width:760px;margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:0;margin-top:16px;border:1px solid var(--ink);background:var(--paper2)}
+.stat{flex:1 1 140px;padding:12px 14px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:none}
+.stat b{display:block;font-family:"Newsreader",serif;font-size:28px;line-height:1}
+.stat span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.progress{height:8px;background:#e8e0c8;border-top:1px solid var(--line);position:relative}
+.progress i{position:absolute;left:0;top:0;bottom:0;width:44.83%;background:var(--green)}
+/* Layout */
+.wrap{max-width:1280px;margin:0 auto;padding:16px 20px 28px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.seg{display:flex;background:var(--card);border:1.5px solid var(--ink);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:none;background:transparent;padding:9px 16px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--ink);min-height:40px}
+.seg button.active{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.btn{border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 16px;font-weight:700;font-size:13.5px;cursor:pointer;min-height:40px}
+.btn.on{background:var(--green);color:#fff;border-color:var(--green)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;vertical-align:-4px;margin-right:6px;font-size:11px;font-weight:800}
+.dot.done{background:var(--green);color:#fff;border:2px solid #0f4424}
+.dot.open{background:#fff;border:2px solid #222}
+.grid{display:grid;grid-template-columns:1.65fr .95fr;gap:18px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.map-card{border:2px solid var(--map-border);background:#ddd;overflow:hidden}
+#map{width:100%;height:62vh;min-height:420px}
+@media(max-width:640px){#map{height:54vh;min-height:360px}}
+.map-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 12px;background:var(--paper2);border-top:1px solid var(--line);font-size:12px;color:var(--ink2)}
+/* Markers */
+.pass-marker{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;line-height:1;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.pass-marker.done{background:var(--green);color:#fff;border:2.5px solid #fff;outline:1.5px solid #0f4424}
+.pass-marker.open{background:#fffdf6;color:#1c231c;border:2px solid #1c231c}
+.pass-marker.sel{transform:scale(1.25);z-index:5;box-shadow:0 0 0 5px rgba(196,154,43,.45)}
+.maplibregl-popup-content{font-family:"IBM Plex Sans",sans-serif;border-radius:10px;padding:14px 16px;max-width:260px;color:#1c231c}
+.maplibregl-popup-content h3{font-family:"Newsreader",serif;font-size:20px;margin:0 0 2px;line-height:1.1}
+.pop-elev{font-family:"IBM Plex Mono",monospace;font-weight:600;color:#1a6b3c}
+.badge{display:inline-block;margin-top:8px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.badge.done{background:#e3efe2;color:#14532d;border:1px solid #1a6b3c}
+.badge.open{background:#f3efe2;color:#555;border:1px solid #999}
+/* Detail + list */
+.detail{background:var(--ink);color:#f5f1e3;border:1px solid var(--ink);padding:16px 18px;margin-bottom:14px}
+.detail h2{font-family:"Newsreader",serif;font-size:26px;margin:2px 0 4px;line-height:1.05}
+.detail p{margin:0;color:#d6d2c2;font-size:14px;line-height:1.5}
+.detail .big-elev{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#e9c46a}
+.panel{background:var(--card);border:1px solid var(--line)}
+.panel-head{padding:12px 14px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.panel-head h2{font-family:"Newsreader",serif;font-size:20px;margin:0}
+.panel-head span{font-size:12px;color:var(--ink2);font-weight:600}
+.list{max-height:720px;overflow:auto}
+@media(max-width:900px){.list{max-height:none}}
+.row{display:flex;gap:10px;width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid var(--line);padding:11px 12px;cursor:pointer;align-items:center;min-height:56px;color:var(--ink)}
+.row:hover{background:#f6f1de}
+.row.active{background:var(--green-bg);box-shadow:inset 4px 0 0 var(--green)}
+.row .rank{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink2);width:22px;text-align:right;flex-shrink:0}
+.row .main{flex:1;min-width:0}
+.row .name{font-weight:700;font-size:15px;line-height:1.2}
+.row .road{font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .elev{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px;text-align:right;white-space:nowrap}
+.check{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+.check.done{background:var(--green);color:#fff}
+.check.open{border:2px solid #9a9a8a;color:transparent;background:transparent}
+/* Mark-as-crossed controls */
+.row{cursor:default}
+.row-main{display:flex;gap:10px;flex:1;min-width:0;text-align:left;background:transparent;border:none;padding:0;cursor:pointer;align-items:center;color:var(--ink);font:inherit;min-height:44px}
+.row-main:focus-visible,.check-btn:focus-visible,.toggle-btn:focus-visible,.tool-btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.check-btn{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:50%;cursor:pointer;padding:0}
+.check-btn:hover .check{transform:scale(1.12)}
+.check-btn .check{transition:transform .12s ease}
+.toggle-btn{margin-top:14px;width:100%;border:2px solid #e9c46a;background:transparent;color:#f5f1e3;border-radius:999px;padding:11px 18px;font-weight:700;font-size:15px;cursor:pointer;min-height:48px}
+.toggle-btn.is-done{background:var(--green);border-color:var(--green);color:#fff}
+.toggle-btn:hover{filter:brightness(1.12)}
+.toggle-btn:disabled{opacity:.45;cursor:default;filter:none}
+.pop-toggle{margin-top:10px;width:100%;border:1.5px solid #1a6b3c;background:#1a6b3c;color:#fff;border-radius:999px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;min-height:40px}
+.pop-toggle.is-done{background:#fff;color:#1c231c;border-color:#999}
+.log-tools{margin-top:14px;border:1px solid var(--line);background:var(--paper2);padding:12px 14px}
+.log-tools h3{font-family:"Newsreader",serif;font-size:17px;margin:0 0 4px}
+.log-tools p{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:var(--ink2)}
+.tool-row{display:flex;gap:8px;flex-wrap:wrap}
+.tool-btn{border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;min-height:44px}
+.tool-btn:hover{background:var(--green-bg)}
+.tool-status{font-size:12.5px;font-weight:600;color:var(--green);min-height:18px;margin-top:8px}
+/* Profile */
+.profile{margin-top:18px;border:1px solid var(--line);background:var(--paper2);padding:16px 18px 10px}
+.profile h2{font-family:"Newsreader",serif;font-size:22px;margin:0 0 2px}
+.profile p{margin:0 0 8px;color:var(--ink2);font-size:13.5px}
+.profile svg{width:100%;height:auto;display:block}
+.notes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:800px){.notes{grid-template-columns:1fr}}
+.note{border-top:3px solid var(--ink);padding-top:10px}
+.note h3{font-family:"Newsreader",serif;margin:0 0 6px;font-size:18px}
+.note p{margin:0;font-size:14px;line-height:1.55;color:var(--ink2)}
+footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font-size:12.5px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-top"><span>The Sierra Nevada • California Crest</span><span>29 paved passes • North → South</span><span>Field Atlas &amp; Crossing Log</span></div>
+  <h1>Sierra Crest <em>Passes</em></h1>
+  <p class="dek" id="dek">Every paved crossing of the Sierra crest, plotted on the spine of the range — from Fredonyer in the north to Tehachapi in the south. Thirteen are in the logbook. Sixteen remain. This is the attempt to cross them all.</p>
+  <div class="stats" aria-label="Progress summary">
+    <div class="stat"><b id="statCrossed">13 of 29</b><span>Crossed</span></div>
+    <div class="stat"><b id="statPct">44.8%</b><span>Complete</span></div>
+    <div class="stat"><b id="statHighestCrossed">9,943 ft</b><span id="statHighestCrossedLabel">Highest crossed — Tioga</span></div>
+    <div class="stat"><b>9,943 ft</b><span>Highest overall — Tioga</span></div>
+    <div class="stat"><b id="statRemaining">16</b><span>Still to cross</span></div>
+  </div>
+  <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Map view">
+      <button id="btnTopo" class="active" onclick="setMode('topo')">Topographic</button>
+      <button id="btnSat" onclick="setMode('sat')">Satellite</button>
+      <button id="btn3d" onclick="setMode('3d')">3D Terrain</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button id="rotateBtn" class="btn" onclick="toggleRotate()" disabled style="opacity:.45">⟳ Rotate — 3D only</button>
+      <button class="btn" onclick="fitAll()">Fit all passes</button>
+    </div>
+    <div class="legend"><span><span class="dot done">✓</span>Crossed</span><span><span class="dot open"></span>Not yet</span><span style="color:var(--rust);font-weight:700">— — Crest line, N → S</span></div>
+  </div>
+
+  <div class="grid">
+    <section>
+      <div class="map-card">
+        <div id="map" aria-label="Interactive map of Sierra Nevada passes"></div>
+        <div class="map-foot"><span id="mapHint">Topographic — OpenTopoMap, with shaded relief at wide zoom. Tap any pass to fly in — contour lines draw at close zoom. Drag to pan, pinch or scroll to zoom.</span><span>Sources: OpenTopoMap / Esri World Imagery • Elevations &amp; coordinates as supplied</span></div>
+      </div>
+
+      <div class="profile">
+        <h2>The crest in profile — north to south</h2>
+        <p>Each dot is a pass in crest order. Green is crossed. The range stays high through the central Sierra, then steps down toward Tehachapi.</p>
+        <svg id="profileSvg" viewBox="0 0 900 190" role="img" aria-label="Elevation profile of the 29 passes from north to south"></svg>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;padding-bottom:6px"><span>NORTH — MORGAN SUMMIT 5,760 FT</span><span>TEHACHAPI 4,064 FT — SOUTH</span></div>
+      </div>
+
+      <div class="notes">
+        <div class="note"><h3 id="bookNoteTitle">In the book — 13 crossed</h3><p id="bookNoteText"><strong>Tioga Pass (9,943 ft)</strong> · <strong>Sonora Pass (9,624 ft)</strong> · <strong>Sherman Pass (9,140 ft)</strong> · <strong>Mount Rose Summit (8,946 ft)</strong> · <strong>Ebbetts Pass (8,732 ft)</strong> · <strong>Carson Pass (8,573 ft)</strong> · <strong>Monitor Pass (8,321 ft)</strong> · <strong>Pacific Grade Summit (8,051 ft)</strong> · <strong>Luther Pass (7,735 ft)</strong> · <strong>Echo Summit (7,377 ft)</strong> · <strong>Daggett Pass (7,339 ft)</strong> · <strong>Donner Summit (7,239 ft)</strong> · <strong>Donner Pass (7,088 ft)</strong>. 7 of the top nine by elevation are in the book.</p></div>
+        <div class="note"><h3>How the crest reads</h3><p>The rust line joins the passes in latitude order, north to south, so you can trace the spine at a glance. It is a crest diagram, not a driving route — several passes sit on spurs (US-395 summits, Nevada-side crossings) just off the main divide.</p></div>
+        <div class="note"><h3>Season note</h3><p>The high passes — Tioga, Sonora, Ebbetts, Monitor, Kaiser — are seasonal and close with snow. Carson (SR-88) and Donner Summit (I-80) are the all-weather workhorses. Plan the remaining high ones for late spring through fall.</p></div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="detail" id="detailCard" aria-live="polite">
+        <div class="big-elev" id="dElev">Select a pass</div>
+        <h2 id="dName">Tap a marker or a name in the list</h2>
+        <p id="dText">Crossed passes are filled green with a check. Open markers are still on the list. The detail for any pass — road, elevation, and status — appears here and on the map.</p>
+        <button class="toggle-btn" id="dToggle" onclick="toggleSelected()" disabled>Select a pass to mark it</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>All 29 — by elevation</h2><span>Tap ○ to mark crossed · tap name to fly there</span></div>
+        <div class="list" id="passList"></div>
+      </div>
+      <div class="log-tools">
+        <h3>Keep your updated log</h3>
+        <p>Marking a pass updates the map, the profile, and the totals above right away. To keep the changes, copy or download the crossed list and send it to Astro — the next update of this page will bake it in.</p>
+        <div class="tool-row">
+          <button class="tool-btn" onclick="copyCrossedList()">Copy crossed list</button>
+          <button class="tool-btn" onclick="downloadLog()">Download log (.txt)</button>
+        </div>
+        <div class="tool-status" id="toolStatus" aria-live="polite"></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink2);line-height:1.6;margin:10px 2px 0">List is ranked highest to lowest. The map's crest line runs in geographic order (north → south), which is a different sequence — that's why Tioga, the highest, sits mid-map.</p>
+    </aside>
+  </div>
+</div>
+
+<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Luther, Echo, Daggett, Donner Summit, and Donner Pass. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium).</footer>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+var PASSES=[
+{name:"Tioga Pass",elev:9943,lat:37.91111,lon:-119.25806,road:"SR-120",crossed:true},
+{name:"Sonora Pass",elev:9624,lat:38.32778,lon:-119.63583,road:"SR-108",crossed:true},
+{name:"Kaiser Pass",elev:9177,lat:37.29139,lon:-119.10278,road:"Kaiser Pass Rd",crossed:false},
+{name:"Minaret Summit",elev:9175,lat:37.65639,lon:-119.06028,road:"SR-203",crossed:false},
+{name:"Sherman Pass",elev:9140,lat:35.99056,lon:-118.36583,road:"Forest Route 22S05",crossed:true},
+{name:"Mount Rose Summit",elev:8946,lat:39.31333,lon:-119.89722,road:"SR-431 (Nevada side)",crossed:true},
+{name:"Ebbetts Pass",elev:8732,lat:38.54435,lon:-119.81185,road:"SR-4",crossed:true},
+{name:"Carson Pass",elev:8573,lat:38.69389,lon:-119.98750,road:"SR-88",crossed:true},
+{name:"Monitor Pass",elev:8321,lat:38.67556,lon:-119.61944,road:"SR-89",crossed:true},
+{name:"Conway Summit",elev:8143,lat:38.08806,lon:-119.18194,road:"US-395",crossed:false},
+{name:"Pacific Grade Summit",elev:8051,lat:38.51667,lon:-119.90944,road:"SR-4",crossed:true},
+{name:"Deadman Summit",elev:8047,lat:37.77083,lon:-119.00833,road:"US-395",crossed:false},
+{name:"Luther Pass",elev:7735,lat:38.78694,lon:-119.94583,road:"SR-89",crossed:true},
+{name:"Devil's Gate Pass",elev:7519,lat:38.34833,lon:-119.36194,road:"US-395",crossed:false},
+{name:"Echo Summit",elev:7377,lat:38.81300,lon:-120.03000,road:"US-50",crossed:true},
+{name:"Daggett Pass",elev:7339,lat:38.97657,lon:-119.88879,road:"SR-207 (Nevada side)",crossed:true},
+{name:"Donner Summit",elev:7239,lat:39.34000,lon:-120.34389,road:"I-80",crossed:true},
+{name:"Brockway Summit",elev:7199,lat:39.26102,lon:-120.07130,road:"SR-267",crossed:false},
+{name:"Spooner Summit",elev:7158,lat:39.10423,lon:-119.89716,road:"US-50 (Nevada side)",crossed:false},
+{name:"Donner Pass",elev:7088,lat:39.31444,lon:-120.32694,road:"Donner Pass Rd (old US-40)",crossed:true},
+{name:"Yuba Pass",elev:6709,lat:39.61750,lon:-120.48889,road:"SR-49",crossed:false},
+{name:"Sherwin Summit",elev:6426,lat:37.51444,lon:-118.62778,road:"US-395",crossed:false},
+{name:"Little Truckee Summit",elev:6400,lat:39.50500,lon:-120.28194,road:"SR-89",crossed:false},
+{name:"Greenhorn Summit",elev:6092,lat:35.73833,lon:-118.55722,road:"SR-155",crossed:false},
+{name:"Morgan Summit",elev:5760,lat:40.36389,lon:-121.53528,road:"SR-89/36",crossed:false},
+{name:"Fredonyer Pass",elev:5748,lat:40.35972,lon:-120.86750,road:"SR-36",crossed:false},
+{name:"Walker Pass",elev:5246,lat:35.66306,lon:-118.02694,road:"SR-178",crossed:false},
+{name:"Beckwourth Pass",elev:5212,lat:39.79167,lon:-120.10778,road:"SR-70",crossed:false},
+{name:"Tehachapi Summit",elev:4064,lat:35.10222,lon:-118.28278,road:"SR-58",crossed:false}
+];
+function fmt(n){return n.toLocaleString('en-US');}
+// Crest order: latitude descending (north -> south)
+var CREST=PASSES.slice().sort(function(a,b){return b.lat-a.lat;});
+var crestCoords=CREST.map(function(p){return [p.lon,p.lat];});
+
+// ---- List ----
+var listEl=document.getElementById('passList');
+PASSES.forEach(function(p,i){
+  var row=document.createElement('div');row.className='row';row.id='row-'+i;
+  var chk=document.createElement('button');chk.type='button';chk.className='check-btn';chk.id='check-'+i;
+  chk.setAttribute('aria-pressed',p.crossed?'true':'false');
+  chk.setAttribute('aria-label','Mark '+p.name+' as '+(p.crossed?'not crossed':'crossed'));
+  chk.title=p.crossed?'Crossed — tap to undo':'Tap to mark as crossed';
+  chk.innerHTML='<span class="check '+(p.crossed?'done':'open')+'" aria-hidden="true">'+(p.crossed?'✓':'')+'</span>';
+  chk.addEventListener('click',function(){toggleCrossed(i);});
+  var main=document.createElement('button');main.type='button';main.className='row-main';
+  main.setAttribute('aria-label','Show '+p.name+', '+fmt(p.elev)+' feet, '+p.road);
+  main.innerHTML='<span class="rank">'+(i+1)+'</span><span class="main"><span class="name">'+p.name+'</span><br><span class="road">'+p.road+' • '+p.lat.toFixed(3)+'°, '+p.lon.toFixed(3)+'°</span></span><span class="elev">'+fmt(p.elev)+' ft</span>';
+  main.addEventListener('click',function(){selectPass(i,true);});
+  row.appendChild(chk);row.appendChild(main);
+  listEl.appendChild(row);
+});
+
+// ---- Profile SVG ----
+var profileCircles=[];
+(function(){
+  var svg=document.getElementById('profileSvg');var W=900,H=190,padL=34,padR=14,padT=16,padB=26;
+  var max=10200,min=3400;var NS='http://www.w3.org/2000/svg';
+  function X(i){return padL+(W-padL-padR)*(i/(CREST.length-1));}
+  function Y(e){return padT+(H-padT-padB)*(1-(e-min)/(max-min));}
+  [4000,6000,8000,10000].forEach(function(g){
+    var l=document.createElementNS(NS,'line');l.setAttribute('x1',padL);l.setAttribute('x2',W-padR);l.setAttribute('y1',Y(g));l.setAttribute('y2',Y(g));l.setAttribute('stroke','#d8cfb8');l.setAttribute('stroke-dasharray','3 4');svg.appendChild(l);
+    var t=document.createElementNS(NS,'text');t.setAttribute('x',4);t.setAttribute('y',Y(g)+4);t.setAttribute('font-size','10');t.setAttribute('fill','#8a8f82');t.setAttribute('font-family','IBM Plex Mono, monospace');t.textContent=(g/1000)+'k';svg.appendChild(t);
+  });
+  var pts=CREST.map(function(p,i){return X(i)+','+Y(p.elev);}).join(' ');
+  var pl=document.createElementNS(NS,'polyline');pl.setAttribute('points',pts);pl.setAttribute('fill','none');pl.setAttribute('stroke','#b4532a');pl.setAttribute('stroke-width','2');svg.appendChild(pl);
+  CREST.forEach(function(p,i){
+    var c=document.createElementNS(NS,'circle');c.setAttribute('cx',X(i));c.setAttribute('cy',Y(p.elev));c.setAttribute('r',p.crossed?6:4.5);c.setAttribute('fill',p.crossed?'#1a6b3c':'#fffdf6');c.setAttribute('stroke',p.crossed?'#0f4424':'#1c231c');c.setAttribute('stroke-width','1.8');c.style.cursor='pointer';
+    var idx=PASSES.indexOf(p);profileCircles[idx]=c;c.addEventListener('click',function(){selectPass(idx,true);});
+    var ti=document.createElementNS(NS,'title');ti.textContent=p.name+' — '+fmt(p.elev)+' ft';c.appendChild(ti);svg.appendChild(c);
+  });
+})();
+
+// ---- Map ----
+var mode='topo', rotating=false, rafId=null, map=null, markers=[], popup=null, selected=-1, mapLoaded=false;
+// One style holds every basemap. Switching views toggles layer visibility and
+// terrain directly — no setStyle() swap. (The old code swapped the whole style
+// with setStyle() and waited for 'style.load' to apply terrain/pitch, but
+// MapLibre applies a JSON setStyle as a diff and never fires 'style.load' for
+// it, so 3D terrain silently never engaged.)
+function baseStyle(){
+  var sources={
+    topo:{type:'raster',tiles:['https://a.tile.opentopomap.org/{z}/{x}/{y}.png','https://b.tile.opentopomap.org/{z}/{x}/{y}.png','https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors, SRTM — OpenTopoMap (CC-BY-SA)'},
+    sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,attribution:'© Esri, Maxar, Earthstar Geographics'},
+    dem:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:15,attribution:'Terrain shading: Mapzen / AWS Terrain Tiles'},
+    crest:{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:crestCoords}}}
+  };
+  var layers=[
+    {id:'base-topo',type:'raster',source:'topo'},
+    {id:'base-sat',type:'raster',source:'sat',layout:{visibility:'none'}},
+    // OpenTopoMap only draws contour lines at zoom 11+. Below that, lay a DEM hillshade
+    // over the base tint so ridges and canyons still read as terrain at the wide view;
+    // the layer drops out at zoom 11, where the map's own contours take over.
+    {id:'relief',type:'hillshade',source:'dem',maxzoom:11,paint:{'hillshade-exaggeration':0.7,'hillshade-shadow-color':'#38322a','hillshade-highlight-color':'#ffffff','hillshade-accent-color':'#8a7f63'}},
+    {id:'crest-casing',type:'line',source:'crest',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ffffff','line-width':5,'line-opacity':0.75}},
+    {id:'crest-line',type:'line',source:'crest',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#b4532a','line-width':2.6,'line-dasharray':[2,0.1]}}
+  ];
+  return {version:8,sources:sources,layers:layers};
+}
+function applyMode(){
+  if(!map||!mapLoaded) return;
+  var isTopo=(mode==='topo');
+  map.setLayoutProperty('base-topo','visibility',isTopo?'visible':'none');
+  map.setLayoutProperty('base-sat','visibility',isTopo?'none':'visible');
+  map.setLayoutProperty('relief','visibility',isTopo?'visible':'none');
+  applyTerrain();
+  if(selected>=0) showPopup(selected);
+}
+function applyTerrain(){
+  if(!map) return;
+  if(mode==='3d'){ try{ map.setTerrain({source:'dem',exaggeration:1.45}); }catch(e){} map.easeTo({pitch:62,bearing:-18,duration:900}); }
+  else { try{ map.setTerrain(null); }catch(e){} map.easeTo({pitch:0,bearing:0,duration:700}); if(rotating) toggleRotate(true); }
+}
+function initMap(){
+  if(typeof maplibregl==='undefined'){ document.getElementById('mapHint').textContent='Map library could not load — the full pass list beside the map still works. Check your connection and reload for the interactive map.'; return; }
+  map=new maplibregl.Map({container:'map',style:baseStyle(),center:[-119.7,38.4],zoom:6.4,attributionControl:{compact:true}});
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+  map.on('load',function(){
+    mapLoaded=true;
+    if(mode!=='topo') applyMode(); // a view button tapped before the map finished loading still lands
+    PASSES.forEach(function(p,i){
+      var el=document.createElement('div');el.className='pass-marker '+(p.crossed?'done':'open');el.textContent=p.crossed?'✓':'';el.title=p.name+' — '+fmt(p.elev)+' ft';el.setAttribute('role','button');el.setAttribute('aria-label',p.name);
+      el.addEventListener('click',function(ev){ev.stopPropagation();selectPass(i,false);showPopup(i);});
+      var mk=new maplibregl.Marker({element:el}).setLngLat([p.lon,p.lat]).addTo(map);markers.push(mk);
+    });
+    fitAll();
+  });
+}
+function showPopup(i){
+  if(!map) return; var p=PASSES[i];
+  if(popup) popup.remove();
+  popup=new maplibregl.Popup({offset:18,closeOnClick:true}).setLngLat([p.lon,p.lat])
+    .setHTML('<h3>'+p.name+'</h3><div class="pop-elev">'+fmt(p.elev)+' ft</div><div style="font-size:13px;margin-top:3px">'+p.road+'</div><span class="badge '+(p.crossed?'done':'open')+'">'+(p.crossed?'✓ Crossed':'Not yet crossed')+'</span><button type="button" class="pop-toggle'+(p.crossed?' is-done':'')+'" onclick="toggleCrossed('+i+')">'+(p.crossed?'Mark as not crossed':'✓ Mark as crossed')+'</button>')
+    .addTo(map);
+}
+function flyToPass(i){
+  if(!map) return; var p=PASSES[i];
+  if(rotating) toggleRotate(true); // a running 3D spin would fight the flight, frame by frame
+  map.stop(); // cancel any in-flight camera move (fit-all, mode pitch reset) so this flight wins
+  map.flyTo({center:[p.lon,p.lat],zoom:Math.max(map.getZoom(),12),duration:1200,essential:true});
+  showPopup(i);
+  // On narrow screens the list sits below the map: if the map is off-screen, bring it
+  // into view so the flight and the zoomed-in pass are actually seen.
+  if(window.innerWidth<=900){
+    var mc=document.querySelector('.map-card');
+    if(mc){ var r=mc.getBoundingClientRect(); if(r.bottom<60||r.top>window.innerHeight){ mc.scrollIntoView({behavior:'smooth',block:'start'}); } }
+  }
+}
+function selectPass(i,fly){
+  selected=i; var p=PASSES[i];
+  document.querySelectorAll('.row').forEach(function(r){r.classList.remove('active');});
+  var row=document.getElementById('row-'+i); if(row){row.classList.add('active'); if(window.innerWidth>900) row.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  document.querySelectorAll('.pass-marker').forEach(function(m,mi){m.classList.toggle('sel',mi===i);});
+  document.getElementById('dElev').textContent=fmt(p.elev)+' ft • '+p.road;
+  document.getElementById('dName').textContent=p.name;
+  document.getElementById('dText').textContent=(p.crossed?'✓ Crossed — this one is in the logbook. ':'Not yet crossed — still on the attempt list. ')+'Crest position '+(CREST.indexOf(p)+1)+' of 29 from the north. Coordinates '+p.lat.toFixed(5)+'°, '+p.lon.toFixed(5)+'°. Ranked #'+(i+1)+' of 29 by elevation.';
+  updateDetailToggle();
+  if(fly) flyToPass(i);
+}
+// ---- Mark as crossed ----
+function updateDetailToggle(){
+  var btn=document.getElementById('dToggle'); if(!btn) return;
+  if(selected<0){ btn.disabled=true; btn.classList.remove('is-done'); btn.textContent='Select a pass to mark it'; return; }
+  var p=PASSES[selected]; btn.disabled=false;
+  btn.classList.toggle('is-done',p.crossed);
+  btn.textContent=p.crossed?'✓ Crossed — tap to undo':'✓ Mark '+p.name+' as crossed';
+}
+function toggleSelected(){ if(selected>=0) toggleCrossed(selected); }
+function toggleCrossed(i){
+  PASSES[i].crossed=!PASSES[i].crossed;
+  selectPass(i,false);
+  refreshPassUI(i);
+  updateStats();
+  if(popup&&map) showPopup(i);
+  var p=PASSES[i];
+  setToolStatus(p.crossed?('✓ '+p.name+' marked as crossed — '+crossedPasses().length+' of 29 in the logbook.'):('↺ '+p.name+' moved back to the attempt list — '+crossedPasses().length+' of 29 crossed.'));
+}
+function refreshPassUI(i){
+  var p=PASSES[i];
+  var chk=document.getElementById('check-'+i);
+  if(chk){ chk.setAttribute('aria-pressed',p.crossed?'true':'false'); chk.setAttribute('aria-label','Mark '+p.name+' as '+(p.crossed?'not crossed':'crossed')); chk.title=p.crossed?'Crossed — tap to undo':'Tap to mark as crossed'; chk.innerHTML='<span class="check '+(p.crossed?'done':'open')+'" aria-hidden="true">'+(p.crossed?'✓':'')+'</span>'; }
+  var els=document.querySelectorAll('.pass-marker');
+  if(els[i]){ els[i].classList.toggle('done',p.crossed); els[i].classList.toggle('open',!p.crossed); els[i].textContent=p.crossed?'✓':''; }
+  var c=profileCircles[i];
+  if(c){ c.setAttribute('r',p.crossed?6:4.5); c.setAttribute('fill',p.crossed?'#1a6b3c':'#fffdf6'); c.setAttribute('stroke',p.crossed?'#0f4424':'#1c231c'); }
+}
+function crossedPasses(){ return PASSES.filter(function(p){return p.crossed;}); }
+function updateStats(){
+  var done=crossedPasses(); var n=done.length;
+  document.getElementById('statCrossed').textContent=n+' of 29';
+  var pct=(n/29*100);
+  document.getElementById('statPct').textContent=(Math.round(pct*10)/10)+'%';
+  document.getElementById('progressBar').style.width=(n/29*100)+'%';
+  document.getElementById('statRemaining').textContent=(29-n);
+  if(n>0){ var top=done[0]; document.getElementById('statHighestCrossed').textContent=fmt(top.elev)+' ft'; document.getElementById('statHighestCrossedLabel').textContent='Highest crossed — '+top.name.replace(/ (Pass|Summit)$/,''); }
+  else { document.getElementById('statHighestCrossed').textContent='—'; document.getElementById('statHighestCrossedLabel').textContent='Highest crossed'; }
+  document.getElementById('dek').textContent='Every paved crossing of the Sierra crest, plotted on the spine of the range — from Fredonyer in the north to Tehachapi in the south. '+(n===0?'None are in the logbook yet.':(n===1?'One is in the logbook.':numberWord(n)+' are in the logbook.'))+' '+(29-n===1?'One remains.':numberWord(29-n)+' remain.')+' This is the attempt to cross them all.';
+  var title=document.getElementById('bookNoteTitle'); if(title) title.textContent='In the book — '+n+' crossed';
+  var note=document.getElementById('bookNoteText');
+  if(note){ if(n===0){ note.textContent='Nothing crossed yet — tap the circle next to any pass in the list to log your first crossing.'; } else { var topNine=PASSES.slice(0,9).filter(function(p){return p.crossed;}).length; note.innerHTML=done.map(function(p){return '<strong>'+p.name+' ('+fmt(p.elev)+' ft)</strong>';}).join(' · ')+'. '+(topNine>0?topNine+' of the top nine by elevation '+(topNine===1?'is':'are')+' in the book.':''); } }
+}
+function numberWord(n){ var w=['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen','Twenty','Twenty-one','Twenty-two','Twenty-three','Twenty-four','Twenty-five','Twenty-six','Twenty-seven','Twenty-eight','Twenty-nine']; return w[n]||(''+n); }
+function crossedListText(){
+  var done=crossedPasses();
+  var lines=['Sierra Crest Passes — Crossing Log','Crossed: '+done.length+' of 29 ('+(Math.round(done.length/29*1000)/10)+'%)',''];
+  done.forEach(function(p,i){ lines.push((i+1)+'. '+p.name+' — '+fmt(p.elev)+' ft — '+p.road); });
+  lines.push('','Still to cross: '+(29-done.length));
+  PASSES.forEach(function(p){ if(!p.crossed) lines.push('– '+p.name+' — '+fmt(p.elev)+' ft — '+p.road); });
+  return lines.join('\n');
+}
+function setToolStatus(msg){ var el=document.getElementById('toolStatus'); if(el) el.textContent=msg; }
+function copyCrossedList(){
+  var text=crossedListText();
+  function done(){ setToolStatus('✓ Crossed list copied — paste it to Astro (or anywhere) to keep this version of the log.'); }
+  function fallback(){ var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ setToolStatus('Copy did not work in this browser — use Download log instead.'); } document.body.removeChild(ta); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done,fallback); } else fallback();
+}
+function downloadLog(){
+  var blob=new Blob([crossedListText()],{type:'text/plain'});
+  var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='sierra-crest-crossing-log.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+  setToolStatus('✓ Log downloaded — send the file to Astro and the next page update will bake these crossings in.');
+}
+function fitAll(){ if(map) map.fitBounds([[-121.7,34.9],[-117.8,40.55]],{padding:36,duration:900}); }
+function setMode(m){
+  mode=m;
+  ['Topo','Sat','3d'].forEach(function(k){document.getElementById('btn'+k).classList.remove('active');});
+  document.getElementById(m==='topo'?'btnTopo':(m==='sat'?'btnSat':'btn3d')).classList.add('active');
+  var rb=document.getElementById('rotateBtn'); rb.disabled=(m!=='3d'); rb.style.opacity=(m==='3d')?'1':'.45';
+  document.getElementById('mapHint').textContent = m==='topo' ? 'Topographic — OpenTopoMap, with shaded relief at wide zoom. Tap any pass to fly in — contour lines draw at close zoom. Drag to pan, pinch or scroll to zoom.'
+    : m==='sat' ? 'Satellite — Esri World Imagery. The crest line and markers stay in sync over the aerial view.'
+    : '3D Terrain — pitched view with exaggerated relief. Drag to orbit, or turn on Rotate for a slow cinematic spin.';
+  applyMode();
+}
+function toggleRotate(forceOff){
+  var rb=document.getElementById('rotateBtn');
+  if(rotating||forceOff===true){ rotating=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; rb.classList.remove('on'); rb.textContent='⟳ Rotate'; return; }
+  if(mode!=='3d') return;
+  rotating=true; rb.classList.add('on'); rb.textContent='■ Stop rotation';
+  function step(){ if(!rotating||!map) return; map.setBearing((map.getBearing()+0.12)%360); rafId=requestAnimationFrame(step); }
+  step();
+}
+initMap();
+updateStats();
+</script>
+</body>
+</html>
