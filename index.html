@@ -120,6 +120,23 @@ button{min-height:44px}
 .note p{margin:0;font-size:14px;line-height:1.55;color:var(--ink2)}
 footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font-size:12.5px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
 </style>
+
+<style id="cam-style">
+/* Live pass cameras (Nov 25, 2026) — Caltrans CCTV stills in the detail card */
+.cam{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.cam figure{margin:0}
+.cam img{display:block;width:100%;height:auto;border:1px solid var(--map-border);border-radius:6px;cursor:zoom-in;background:#0c0f0c}
+.cam figcaption{font-size:12.5px;color:var(--ink2);line-height:1.55;margin-top:7px}
+.cam figcaption b{color:var(--ink)}
+.cam .cam-links{font-size:12.5px;margin:6px 0 0;line-height:1.6}
+.cam-badge{font-size:11px;margin-left:6px;vertical-align:2px}
+#cam-lightbox{position:fixed;inset:0;z-index:200;background:rgba(8,10,8,.94);display:none;align-items:center;justify-content:center;flex-direction:column;padding:18px}
+#cam-lightbox.open{display:flex}
+#cam-lightbox img{max-width:94vw;max-height:78vh;border-radius:6px}
+#cam-lightbox .lb-cap{color:#ece8da;font-size:14.5px;margin-top:12px;text-align:center;max-width:640px;line-height:1.55}
+#cam-lightbox .lb-cap a{color:#e3b341}
+#cam-lightbox .lb-x{position:absolute;top:10px;right:14px;background:none;border:none;color:#ece8da;font-size:30px;cursor:pointer;line-height:1;padding:10px}
+</style>
 </head>
 <body>
 <header class="masthead">
@@ -176,10 +193,11 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
         <div class="big-elev" id="dElev">Select a pass</div>
         <h2 id="dName">Tap a marker or a name in the list</h2>
         <p id="dText">Crossed passes are filled green with a check. Open markers are still on the list. The detail for any pass — road, elevation, and status — appears here and on the map.</p>
+        <div class="cam" id="dCam" hidden></div>
         <button class="toggle-btn" id="dToggle" onclick="toggleSelected()" disabled>Select a pass to mark it</button>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2>All 29 — by elevation</h2><span>Tap ○ to mark crossed · tap name to fly there</span></div>
+        <div class="panel-head"><h2>All 29 — by elevation</h2><span>Tap ○ to mark crossed · tap name to fly there · 📷 = live camera</span></div>
         <div class="list" id="passList"></div>
       </div>
       <div class="log-tools">
@@ -196,8 +214,75 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
   </div>
 </div>
 
-<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Deadman, Luther, Devil's Gate, Echo, Daggett, Donner Summit, Donner Pass, Conway, Spooner, Sherwin, Little Truckee, Brockway, Yuba, Greenhorn, Morgan, Walker, Beckwourth, Tehachapi, and Minaret. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium).</footer>
+<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Deadman, Luther, Devil's Gate, Echo, Daggett, Donner Summit, Donner Pass, Conway, Spooner, Sherwin, Little Truckee, Brockway, Yuba, Greenhorn, Morgan, Walker, Beckwourth, Tehachapi, and Minaret. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium). Live road-camera stills are Caltrans CCTV snapshots, credited on each pass’s card and refreshed in place; resort camera pages are linked, not copied.</footer>
 
+<div id="cam-lightbox" role="dialog" aria-modal="true" aria-label="Camera view, enlarged">
+  <button class="lb-x" id="camLbX" aria-label="Close enlarged camera view">✕</button>
+  <img id="camLbImg" alt="">
+  <div class="lb-cap" id="camLbCap"></div>
+</div>
+<script>
+// Live pass cameras (Nov 25, 2026). Stills are Caltrans CCTV snapshots; each
+// label says what the camera actually shows. Passes with no camera anywhere
+// near them are simply absent — no far-away views borrowed.
+var CAMS={
+"Carson Pass":{img:"https://cwwp2.dot.ca.gov/data/d10/cctv/image/133ebsr88pinegrove/133ebsr88pinegrove.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d10/133ebsr88pinegrove.htm",label:"SR-88 at Pine Grove (2,575 ft) — the foothill approach to Carson Pass; the only Caltrans camera on SR-88",links:[{t:"Kirkwood mountain cams — the Cornice Cam and friends, up at the pass",u:"https://www.kirkwood.com/the-mountain/mountain-conditions/mountain-cams.aspx"}]},
+"Echo Summit":{img:"https://cwwp2.dot.ca.gov/data/d3/cctv/image/hwy50atechosummit/hwy50atechosummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d3/hwy50atechosummit.htm",label:"US-50 at Echo Summit",links:[{t:"Sierra-at-Tahoe live cams",u:"https://www.sierraattahoe.com/live-cams/"}]},
+"Donner Summit":{img:"https://cwwp2.dot.ca.gov/data/d3/cctv/image/hwy80atdonnersummit/hwy80atdonnersummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d3/hwy80atdonnersummit.htm",label:"I-80 at Donner Summit"},
+"Donner Pass":{img:"https://cwwp2.dot.ca.gov/data/d3/cctv/image/hwy80atdonnersummit/hwy80atdonnersummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d3/hwy80atdonnersummit.htm",label:"I-80 at Donner Summit, just above the old Donner Pass Road"},
+"Brockway Summit":{img:"https://cwwp2.dot.ca.gov/data/d3/cctv/image/hwy267atbrockwaysummit/hwy267atbrockwaysummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d3/hwy267atbrockwaysummit.htm",label:"SR-267 at Brockway Summit"},
+"Luther Pass":{img:"https://cwwp2.dot.ca.gov/data/d3/cctv/image/hwy50atmeyers/hwy50atmeyers.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d3/hwy50atmeyers.htm",label:"US-50 at Meyers, where the SR-89 Luther Pass road meets the highway"},
+"Conway Summit":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395conwaysummit/us395conwaysummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/us395conwaysummit.htm",label:"US-395 at Conway Summit"},
+"Deadman Summit":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395obsidiandome/us395obsidiandome.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/us395obsidiandome.htm",label:"US-395 at Obsidian Dome, just south of Deadman Summit"},
+"Devil's Gate Pass":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395sr108sonorajunction/us395sr108sonorajunction.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/us395sr108sonorajunction.htm",label:"US-395 at Sonora Junction, a few miles north of Devil's Gate Pass"},
+"Sherwin Summit":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395tomsplace/us395tomsplace.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/us395tomsplace.htm",label:"US-395 at Tom's Place, at the foot of the Sherwin Grade below Sherwin Summit"},
+"Minaret Summit":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/sr203mammothmountain/sr203mammothmountain.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/sr203mammothmountain.htm",label:"SR-203 in Mammoth Lakes, on the road up to Minaret Summit"},
+"Tehachapi Summit":{img:"https://cwwp2.dot.ca.gov/data/d9/cctv/image/sr58tehachapisummit/sr58tehachapisummit.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d9/sr58tehachapisummit.htm",label:"SR-58 at Tehachapi Summit"},
+"Morgan Summit":{img:"https://cwwp2.dot.ca.gov/data/d2/cctv/image/morgansmt/morgansmt.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d2/morgansmt.htm",label:"SR-36 at Morgan Summit"},
+"Fredonyer Pass":{img:"https://cwwp2.dot.ca.gov/data/d2/cctv/image/fredonyersmt/fredonyersmt.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d2/fredonyersmt.htm",label:"SR-36 at Fredonyer Summit"},
+"Ebbetts Pass":{links:[{t:"Bear Valley Summit Cam — on SR-4 below the pass",u:"https://www.bearvalley.com/webcam"}]},
+"Pacific Grade Summit":{links:[{t:"Bear Valley Summit Cam — on SR-4, between Pacific Grade and Ebbetts Pass",u:"https://www.bearvalley.com/webcam"}]},
+"Sonora Pass":{links:[{t:"Dodge Ridge webcams — the ski area on SR-108 below the pass",u:"https://www.dodgeridge.com/webcams/"}]}
+};
+function camSrc(base){return base+(base.indexOf('?')<0?'?':'&')+'t='+Date.now();}
+function renderCam(p){
+  var box=document.getElementById('dCam'); if(!box) return;
+  var c=(typeof CAMS!=='undefined')?CAMS[p.name]:null;
+  if(!c){box.hidden=true;box.innerHTML='';return;}
+  var html='';
+  if(c.img){
+    html+='<figure><img id="dCamImg" data-base="'+c.img+'" src="'+camSrc(c.img)+'" alt="Live Caltrans camera: '+c.label+'"><figcaption><b>📷 Live camera</b> — '+c.label+'. Caltrans CCTV still, refreshed here every couple of minutes; tap the picture to enlarge. <a href="'+c.page+'" target="_blank" rel="noopener">Camera page ↗</a></figcaption></figure>';
+  }
+  if(c.links&&c.links.length){
+    html+='<p class="cam-links">'+(c.img?'More views: ':'📷 ')+c.links.map(function(l){return '<a href="'+l.u+'" target="_blank" rel="noopener">'+l.t+' ↗</a>';}).join(' · ')+'</p>';
+  }
+  box.innerHTML=html; box.hidden=false;
+  var img=document.getElementById('dCamImg');
+  if(img){
+    img.addEventListener('click',function(){openCamLb(c);});
+    img.addEventListener('error',function(){
+      box.innerHTML='<p class="cam-links">📷 The Caltrans camera for this pass is not answering right now — <a href="'+c.page+'" target="_blank" rel="noopener">try its camera page ↗</a></p>';
+    });
+  }
+}
+function openCamLb(c){
+  var lb=document.getElementById('cam-lightbox'); if(!lb||!c.img) return;
+  var img=document.getElementById('camLbImg');
+  img.dataset.base=c.img; img.src=camSrc(c.img); img.alt='Live Caltrans camera: '+c.label;
+  document.getElementById('camLbCap').innerHTML=c.label+' — Caltrans CCTV. <a href="'+c.page+'" target="_blank" rel="noopener">Open the camera page ↗</a>';
+  lb.classList.add('open');
+}
+function closeCamLb(){var lb=document.getElementById('cam-lightbox'); if(lb) lb.classList.remove('open');}
+document.getElementById('camLbX').addEventListener('click',closeCamLb);
+document.getElementById('cam-lightbox').addEventListener('click',function(e){if(e.target===this) closeCamLb();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape') closeCamLb();});
+setInterval(function(){
+  var img=document.getElementById('dCamImg');
+  if(img&&img.dataset.base) img.src=camSrc(img.dataset.base);
+  var lb=document.getElementById('cam-lightbox'), li=document.getElementById('camLbImg');
+  if(lb&&li&&lb.classList.contains('open')&&li.dataset.base) li.src=camSrc(li.dataset.base);
+},120000);
+</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 var PASSES=[
@@ -248,7 +333,7 @@ PASSES.forEach(function(p,i){
   chk.addEventListener('click',function(){toggleCrossed(i);});
   var main=document.createElement('button');main.type='button';main.className='row-main';
   main.setAttribute('aria-label','Show '+p.name+', '+fmt(p.elev)+' feet, '+p.road);
-  main.innerHTML='<span class="rank">'+(i+1)+'</span><span class="main"><span class="name">'+p.name+'</span><br><span class="road">'+p.road+' • '+p.lat.toFixed(3)+'°, '+p.lon.toFixed(3)+'°</span></span><span class="elev">'+fmt(p.elev)+' ft</span>';
+  main.innerHTML='<span class="rank">'+(i+1)+'</span><span class="main"><span class="name">'+p.name+((typeof CAMS!=='undefined'&&CAMS[p.name])?'<span class="cam-badge" title="Live camera in the detail card">📷</span>':'')+'</span><br><span class="road">'+p.road+' • '+p.lat.toFixed(3)+'°, '+p.lon.toFixed(3)+'°</span></span><span class="elev">'+fmt(p.elev)+' ft</span>';
   main.addEventListener('click',function(){selectPass(i,true);});
   row.appendChild(chk);row.appendChild(main);
   listEl.appendChild(row);
@@ -358,6 +443,7 @@ function selectPass(i,fly){
   document.getElementById('dName').textContent=p.name;
   document.getElementById('dText').textContent=(p.crossed?'✓ Crossed — this one is in the logbook. ':'Not yet crossed — still on the attempt list. ')+'Crest position '+(CREST.indexOf(p)+1)+' of 29 from the north. Coordinates '+p.lat.toFixed(5)+'°, '+p.lon.toFixed(5)+'°. Ranked #'+(i+1)+' of 29 by elevation.';
   updateDetailToggle();
+  renderCam(p);
   if(fly) flyToPass(i);
 }
 // ---- Mark as crossed ----
