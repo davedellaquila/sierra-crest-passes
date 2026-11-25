@@ -215,7 +215,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 28px;color:var(--ink2);font
   </div>
 </div>
 
-<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Deadman, Luther, Devil's Gate, Echo, Daggett, Donner Summit, Donner Pass, Conway, Spooner, Sherwin, Little Truckee, Brockway, Yuba, Greenhorn, Morgan, Walker, Beckwourth, Tehachapi, and Minaret. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium). Live road-camera stills are Caltrans CCTV snapshots, credited on each pass’s card and refreshed in place; resort camera pages are linked, not copied.</footer>
+<footer>29 principal paved passes on and near the Sierra crest, including Nevada-side Carson Range crossings (Mount Rose, Daggett, Spooner). “CR” in the original question read as the California crest. Crossed status reflects Dave's log as of November 2026: Tioga, Sonora, Sherman, Mount Rose, Ebbetts, Carson, Monitor, Pacific Grade, Deadman, Luther, Devil's Gate, Echo, Daggett, Donner Summit, Donner Pass, Conway, Spooner, Sherwin, Little Truckee, Brockway, Yuba, Greenhorn, Morgan, Walker, Beckwourth, Tehachapi, and Minaret. Map: MapLibre GL — Topographic © OpenStreetMap contributors, SRTM / OpenTopoMap (CC-BY-SA); Satellite © Esri, Maxar, Earthstar Geographics; terrain shading and 3D relief from AWS Terrain Tiles (Terrarium). Live camera stills are credited on each pass’s card and refreshed in place — Caltrans CCTV for the road cameras, and Dodge Ridge’s own live still for Sonora Pass; other resort camera pages are linked, not copied.</footer>
 
 <div id="cam-lightbox" role="dialog" aria-modal="true" aria-label="Camera view, enlarged">
   <button class="lb-x" id="camLbX" aria-label="Close enlarged camera view">✕</button>
@@ -243,7 +243,7 @@ var CAMS={
 "Fredonyer Pass":{img:"https://cwwp2.dot.ca.gov/data/d2/cctv/image/fredonyersmt/fredonyersmt.jpg",page:"https://cwwp2.dot.ca.gov/vm/loc/d2/fredonyersmt.htm",label:"SR-36 at Fredonyer Summit"},
 "Ebbetts Pass":{links:[{t:"Bear Valley Summit Cam — on SR-4 below the pass",u:"https://www.bearvalley.com/webcam"}]},
 "Pacific Grade Summit":{links:[{t:"Bear Valley Summit Cam — on SR-4, between Pacific Grade and Ebbetts Pass",u:"https://www.bearvalley.com/webcam"}]},
-"Sonora Pass":{links:[{t:"Dodge Ridge webcams — the ski area on SR-108 below the pass",u:"https://www.dodgeridge.com/webcams/"}]}
+"Sonora Pass":{img:"https://i.ytimg.com/vi/RjXOWYVMqA0/hqdefault_live.jpg",page:"https://www.youtube.com/watch?v=RjXOWYVMqA0",credit:"Dodge Ridge Summit Cam",label:"Dodge Ridge Summit Cam — the top of the ski area on SR-108, below Sonora Pass",links:[{t:"Dodge Ridge webcams — all three live cameras",u:"https://www.dodgeridge.com/webcams/"}]}
 };
 function camSrc(base){return base+(base.indexOf('?')<0?'?':'&')+'t='+Date.now();}
 function renderCam(p){
@@ -252,7 +252,8 @@ function renderCam(p){
   if(!c){box.hidden=true;box.innerHTML='';return;}
   var html='';
   if(c.img){
-    html+='<figure><img id="dCamImg" data-base="'+c.img+'" src="'+camSrc(c.img)+'" alt="Live Caltrans camera: '+c.label+'"><figcaption><b>📷 Live camera</b> — '+c.label+'. Caltrans CCTV still, refreshed here every couple of minutes; tap the picture to enlarge. <a href="'+c.page+'" target="_blank" rel="noopener">Camera page ↗</a></figcaption></figure>';
+    var cred=c.credit||'Caltrans CCTV';
+    html+='<figure><img id="dCamImg" data-base="'+c.img+'" src="'+camSrc(c.img)+'" alt="Live camera: '+c.label+'"><figcaption><b>📷 Live camera</b> — '+c.label+'. '+(cred==='Caltrans CCTV'?'Caltrans CCTV still':'Still from the '+cred+', live')+', refreshed here every couple of minutes; tap the picture to enlarge. <a href="'+c.page+'" target="_blank" rel="noopener">Camera page ↗</a></figcaption></figure>';
   }
   if(c.links&&c.links.length){
     html+='<p class="cam-links">'+(c.img?'More views: ':'📷 ')+c.links.map(function(l){return '<a href="'+l.u+'" target="_blank" rel="noopener">'+l.t+' ↗</a>';}).join(' · ')+'</p>';
@@ -262,15 +263,15 @@ function renderCam(p){
   if(img){
     img.addEventListener('click',function(){openCamLb(c);});
     img.addEventListener('error',function(){
-      box.innerHTML='<p class="cam-links">📷 The Caltrans camera for this pass is not answering right now — <a href="'+c.page+'" target="_blank" rel="noopener">try its camera page ↗</a></p>';
+      box.innerHTML='<p class="cam-links">📷 The camera for this pass is not answering right now — <a href="'+c.page+'" target="_blank" rel="noopener">try its camera page ↗</a></p>';
     });
   }
 }
 function openCamLb(c){
   var lb=document.getElementById('cam-lightbox'); if(!lb||!c.img) return;
   var img=document.getElementById('camLbImg');
-  img.dataset.base=c.img; img.src=camSrc(c.img); img.alt='Live Caltrans camera: '+c.label;
-  document.getElementById('camLbCap').innerHTML=c.label+' — Caltrans CCTV. <a href="'+c.page+'" target="_blank" rel="noopener">Open the camera page ↗</a>';
+  img.dataset.base=c.img; img.src=camSrc(c.img); img.alt='Live camera: '+c.label;
+  document.getElementById('camLbCap').innerHTML=c.label+' — '+(c.credit||'Caltrans CCTV')+'. <a href="'+c.page+'" target="_blank" rel="noopener">Open the camera page ↗</a>';
   lb.classList.add('open');
 }
 function closeCamLb(){var lb=document.getElementById('cam-lightbox'); if(lb) lb.classList.remove('open');}
